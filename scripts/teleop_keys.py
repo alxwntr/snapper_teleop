@@ -37,12 +37,15 @@ class ControlPoint:
     def scale_step (self, sc):
         return (self.step / self.max) * sc
 
+
 # An Action is a command sent from a control interface
 class Action:
     pass
 
+
 class Stop (Action):
     pass
+
 
 class Quit (Action):
     pass
@@ -82,6 +85,7 @@ class Axis:
     def __init__ (self, axis):
         self.axis   = axis
         self.value  = 0
+
 
 class DigitalAxis (Axis):
     __slots__   = ["plus", "minus", "more", "less"]
@@ -319,6 +323,7 @@ def main():
 
     run(win)
 
+#Comment
 if __name__ == '__main__':
     try:
         main()
