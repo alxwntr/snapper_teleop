@@ -1,161 +1,11 @@
-import  os
 from    __future__      import division
 import  pygame
 
+from    .   import actions as act
+from    .   import axis
+
 # Grr python2 rubbish
 __metaclass__ = type
-
-
-def clamp (v, a, b):
-    if v < a:
-        return a
-    if v > b:
-        return b
-    return v
-
-
-# A ControlPoint is a value that can be changed by a control interface.
-# It can take positive or negative values up to a certain maximum.
-class ControlPoint:
-    __slots__ = [
-        "value",    # The current value of the control point
-        "step",     # The size of a digital change
-        "adj",      # The steps to change .step by
-        "max",      # The maximim allowed value
-    ]
-
-    def __init__ (self, value, step, adjust, max):
-        self.value  = value
-        self.step   = step
-        self.adj    = adjust
-        self.max    = max
-
-    # Return a scaled value
-    def scale (self, sc):
-        return (self.value / self.max) * sc
-
-    def scale_step (self, sc):
-        return (self.step / self.max) * sc
-
-
-# An Action is a command sent from a control interface
-class Action:
-    pass
-
-
-class Stop (Action):
-    pass
-
-
-class Quit (Action):
-    pass
-
-
-# A ControlAction is an adjustment to a ControlPoint.
-# The value of a ControlAction is always in [-1,1].
-class Control (Action):
-    __slots__   = ["axis", "value"]
-
-    def __init__ (self, axis, value, **kw):
-        super(Control, self).__init__(**kw)
-        self.axis       = axis
-        self.value      = value
-
-class Analogue (Control):
-    def apply (self, point):
-        point.value     = self.value * point.max
-
-class Digital (Control):
-    def apply (self, point):
-        point.value     = self.value * point.step
-
-class AbsAdjust (Control):
-    def apply (self, point):
-        point.step      = self.value * point.max
-
-class RelAdjust (Control):
-    def apply (self, point):
-        st              = point.step + self.value * point.adj
-        point.step      = clamp(st, 0, point.max)
-
-
-class Axis:
-    __slots__   = ["axis", "value"]
-
-    def __init__ (self, axis):
-        self.axis   = axis
-        self.value  = 0
-
-
-class DigitalAxis (Axis):
-    __slots__   = ["plus", "minus", "more", "less"]
-
-    def __init__ (self, plus, minus, more, less, **kws):
-        super(DigitalAxis, self).__init__(**kws)
-        self.plus   = plus
-        self.minus  = minus
-        self.more   = more
-        self.less   = less
-
-    def mk_digital (self):
-        return act.Digital(axis=self.axis, value=self.value)
-
-    def mk_adjust (self, by):
-        return act.RelAdjust(axis=self.axis, value=by)
-
-    def handle_keydown (self, key):
-        if key == self.plus:
-            self.value  = 1
-            return [self.mk_digital()]
-
-        if key == self.minus:
-            self.value  = -1
-            return [self.mk_digital()]
-
-        if key == self.more:
-            return [self.mk_adjust(1), self.mk_digital()]
-
-        if key == self.less:
-            return [self.mk_adjust(-1), self.mk_digital()]
-
-        return []
-
-    def handle_keyup (self, key):
-        if key == self.plus and self.value == 1:
-            self.value  = 0
-            return [self.mk_digital()]
-
-        elif key == self.minus and self.value == -1:
-            self.value  = 0
-            return [self.mk_digital()]
-
-        return []
-
-
-class AnalogueAxis (Axis):
-    __slots__   = ["scale", "dead"]
-
-    def __init__ (self, scale=1.0, dead=0.1, **kws):
-        super(AnalogueAxis, self).__init__(**kws)
-        self.scale  = scale / (1.0 - dead)
-        self.dead   = dead
-
-    def handle_value (self, value):
-        if value < self.dead and value > -self.dead:
-            value   = 0.0
-        else:
-            if value > 0:
-                value   = value - self.dead
-            else:
-                value   = value + self.dead
-            value   = round(value * self.scale, 3)
-
-        if value == self.value:
-            return []
-        self.value  = value
-
-        return [act.Analogue(axis=self.axis, value=value)]
-
 
 # Colours
 BLACK   = (0,   0,   0)
@@ -163,7 +13,6 @@ WHITE   = (255, 255, 255)
 GRAY    = (80,  80,  80)
 RED     = (240, 0,   0)
 YELLOW  = (240, 240, 0)
-
 
 # This implements the pygame interface. This can handle key-up events,
 # so the motors stop as soon as you release the key. It create a tiny
@@ -316,16 +165,3 @@ class PygameInterface:
     def update (self):
         pygame.display.update()
 
-
-def main():
-    print("Using PyGame interface")
-    win   = PygameInterface()
-
-    run(win)
-
-#Comment
-if __name__ == '__main__':
-    try:
-        main()
-    except:
-        pass

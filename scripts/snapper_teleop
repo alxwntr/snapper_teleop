@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+
+import  os
+import  snapper_teleop
+
+if "DISPLAY" in os.environ and os.environ["DISPLAY"] != "":
+    print("Using PyGame interface")
+    import snapper_teleop.xpygame
+    win   = snapper_teleop.xpygame.PygameInterface()
+else:
+    print("Using curses interface")
+    import snapper_teleop.xcurses
+    win   = snapper_teleop.xcurses.CursesInterface()
+
+snapper_teleop.run(win)
